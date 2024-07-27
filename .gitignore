@@ -1,3 +1,9 @@
 3D/gcode/*
 3D/gcode/
 3D/gocde/*.gcode
+runtime/venv
+runtime/venv/
+runtime/venv/*
+runtime/.idea/
+runtime/idea
+runtime/.idea/*
