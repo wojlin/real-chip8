@@ -7,3 +7,9 @@ runtime/venv/*
 runtime/.idea/
 runtime/idea
 runtime/.idea/*
+runtime/__pycache__/
+runtime/__pycache__
+runtime/__pycache__/*
+rpi-rgb-led-matrix/
+rpi-rgb-led-matrix/*
+rpi-rgb-led-matrix

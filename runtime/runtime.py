@@ -6,6 +6,8 @@ import re
 import subprocess
 import copy
 
+import hardware
+import display
 
 class Runtime:
     DRIVE_NAME = "chip8"
@@ -13,6 +15,11 @@ class Runtime:
     CHECK_DELAY = 1
 
     def __init__(self):
+        self.leds = hardware.Leds()
+        self.leds.turn_green(True)
+
+        self.keyboard = hardware.Keypad()
+
         self.drives = self.get_current_drives()
         self.added_drives = {}
         self.removed_drives = {}
@@ -32,7 +39,7 @@ class Runtime:
             if drive_label == Runtime.DRIVE_NAME:
                 print("Detected desired USB drive at startup.")
                 self.load_ch8_files(mountpoint)
-                self.launch_emulator()
+                self.launch_selection()
 
     def manage_plugged(self, new_drives):
         for drive in self.added_drives:
@@ -42,8 +49,9 @@ class Runtime:
 
             if drive_label == Runtime.DRIVE_NAME:
                 print("Detected desired USB drive")
+                self.leds.turn_yellow(True)
                 self.load_ch8_files(new_drives[drive])
-                self.launch_emulator()
+                self.launch_selection()
                 break
 
     def manage_unplugged(self, new_drives):
@@ -51,6 +59,7 @@ class Runtime:
             drive_label = self.drive_labels.get(drive, "Unknown")  # Get the stored drive label
             print(f"USB drive removed: {drive} (Label: {drive_label})")
             if drive_label == Runtime.DRIVE_NAME:
+                self.leds.turn_yellow(False)
                 print("Unplugged desired USB drive")
                 self.terminate_emulator()
                 break
@@ -106,20 +115,23 @@ class Runtime:
                     with open(file_path, 'rb') as f:
                         binary_content = f.read()
                         formatted_content = ' '.join(f'{byte:02x}' for byte in binary_content)
-                        self.ch8_files[file] = formatted_content
+                        self.ch8_files[file[:-4]] = formatted_content
         print("Loaded .ch8 files:", list(self.ch8_files.keys()))
 
-    def launch_emulator(self):
+    def launch_selection(self):
+        list_of_files = list(self.ch8_files.keys())
+        d = display.Display(list_of_files)
+        select = d.launch()
+        #self.launch_emulator(list_of_files[select])
+    def launch_emulator(self, select):
         if self.emulator_process is None:
-            content = self.choose_chip8_program()
-            if content:
-                data = copy.copy(Runtime.PROGRAM_ARGS)
-                data.append(content)
-                print(f"Launching emulator with arguments: {data}")
-                # Uncomment the line below when ready to launch the real emulator
-                # self.emulator_process = subprocess.Popen(data)
-                self.emulator_process = subprocess.Popen(['sleep', '300'])  # Dummy process for demonstration
-                print(f"Launched emulator program with PID: {self.emulator_process.pid}")
+            data = copy.copy(Runtime.PROGRAM_ARGS)
+            data.append(self.ch8_files[select])
+            print(f"Launching emulator with arguments: {data}")
+            # Uncomment the line below when ready to launch the real emulator
+            # self.emulator_process = subprocess.Popen(data)
+            self.emulator_process = subprocess.Popen(['sleep', '300'])  # Dummy process for demonstration
+            print(f"Launched emulator program with PID: {self.emulator_process.pid}")
 
     def terminate_emulator(self):
         if self.emulator_process:
@@ -131,16 +143,6 @@ class Runtime:
                 self.emulator_process.kill()
                 print(f"Killed emulator program with PID: {self.emulator_process.pid}")
             self.emulator_process = None
-
-    def choose_chip8_program(self):
-        if self.ch8_files:
-            first_file = next(iter(self.ch8_files))  # Get the first key from the dictionary
-            first_file_content = self.ch8_files[first_file]
-            print(f"First CHIP-8 program chosen: {first_file}")
-            return first_file_content
-        else:
-            print("No .ch8 files found.")
-            return None
 
 
 def main():
