@@ -134,10 +134,30 @@
         ```
 
     - update submodules
-    
+
         ```bash
+        git submodule add -f git@github.com:hzeller/rpi-rgb
         git submodule init
         git submodule update
+        ```
+
+    - move to submodule python bindings
+
+        ```bash
+        cd rpi-rgb-led-matrix/bindings/python
+        ```
+
+    - install dependencies
+
+        ```bash
+        sudo apt-get update && sudo apt-get install python3-dev cython3 -y
+        ```
+
+    - install rgb matrix lib for python
+
+        ```bash
+        make build-python 
+        sudo make install-python 
         ```
 
     - move to runtime directory:
