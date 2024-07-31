@@ -27,23 +27,49 @@ char** chip8_reader_list_files(size_t* file_count) {
 
     // Allocate memory for the file list
     char** file_list = (char**)malloc(MAX_FILES * sizeof(char*));
+    if (file_list == NULL) {
+        Serial.println("Failed to allocate memory for file list");
+        *file_count = 0;
+        return NULL;
+    }
+    
     *file_count = 0;
 
     // Iterate through files and directories
     File file = root.openNextFile();
-    while (file && *file_count < MAX_FILES) {
+    while (file) {
         if (!file.isDirectory()) {
-            // Allocate memory for each filename and copy the name
-            file_list[*file_count] = (char*)malloc(MAX_FILENAME_LEN);
-            strncpy(file_list[*file_count], file.name(), MAX_FILENAME_LEN - 1);
-            file_list[*file_count][MAX_FILENAME_LEN - 1] = '\0';  // Ensure null termination
-            (*file_count)++;
+            if (*file_count < MAX_FILES) {
+                // Allocate memory for each filename
+                file_list[*file_count] = (char*)malloc(MAX_FILENAME_LEN);
+                if (file_list[*file_count] == NULL) {
+                    Serial.println("Failed to allocate memory for filename");
+                    // Free previously allocated memory in case of failure
+                    for (size_t i = 0; i < *file_count; i++) {
+                        free(file_list[i]);
+                    }
+                    free(file_list);
+                    *file_count = 0;
+                    return NULL;
+                }
+                // Copy the filename and ensure null termination
+                strncpy(file_list[*file_count], file.name(), MAX_FILENAME_LEN - 1);
+                file_list[*file_count][MAX_FILENAME_LEN - 1] = '\0';
+                (*file_count)++;
+            } else {
+                Serial.println("Reached maximum number of files");
+                break; // Exit the loop if max file count is reached
+            }
         }
+        file.close(); // Close the current file before opening the next
         file = root.openNextFile();
     }
 
+    root.close(); // Close the root directory
+
     return file_list;
 }
+
 
 /**
  * Checks if the SD card is present.

@@ -25,6 +25,13 @@ void keypad_init(const uint8_t* input_pins, const uint8_t* output_pins, uint8_t 
 int wait_for_key();
 
 /**
+ * @brief Wait for a key press release.
+ * 
+ * @return int -1
+ */
+int wait_for_release();
+
+/**
  * @brief Read the currently pressed key without blocking.
  * 
  * @return int The key value (0-15) or -1 if no key is pressed.

@@ -62,6 +62,15 @@ int wait_for_key() {
     return key;
 }
 
+int wait_for_release() {
+    int key = 0;
+    // Loop until a key press is detected
+    while (key != -1) {
+        key = read_key();
+    }
+    return key;
+}
+
 char hex_to_char(int hex_value) {
     // Convert hex value (0-15) to corresponding character
     if (hex_value >= 0 && hex_value <= 9) {

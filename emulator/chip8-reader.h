@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include <SD.h>
 
-#define MAX_FILES 100
-#define MAX_FILENAME_LEN 50
+#define MAX_FILES 50
+#define MAX_FILENAME_LEN 20
 
 /**
  * Initializes the SD card.
