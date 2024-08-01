@@ -3,6 +3,11 @@
 
 #include "chip8.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
 /**
  * @brief Clear the display.
  *
@@ -274,5 +279,9 @@ void chip8_execute_opcode_load_registers(Chip8 *chip8, Opcode *opcode);
  * @param opcode Pointer to the Opcode structure containing the instruction.
  */
 void chip8_execute_opcode_load_memory(Chip8 *chip8, Opcode *opcode);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* CHIP8_OPCODES_H */
