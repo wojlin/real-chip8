@@ -36,7 +36,7 @@ int read_key() {
         for (int i = 0; i < num_outputs; i++) {
             digitalWrite(output_pins[i], (i == row) ? HIGH : LOW);
         }
-        
+        delay(10);
         // Read the input pins (columns)
         for (int col = 0; col < num_inputs; col++) {
             if (digitalRead(input_pins[col]) == HIGH) {

@@ -27,7 +27,6 @@ const uint8_t chip8_font_set[FONT_SET_SIZE] = {
  * @param chip8 Pointer to the Chip8 structure to initialize.
  */
 void chip8_init(Chip8 *chip8) {
-    srand((unsigned int)time(NULL));
 
     chip8->stack_pointer = 0;
     chip8->sound_timer = 0;

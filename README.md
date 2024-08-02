@@ -1,5 +1,15 @@
 # CHIP8 Machine
 
+Downloading Adafruit GFX Library@1.11.10
+Adafruit GFX Library@1.11.10
+Installing Adafruit GFX Library@1.11.10
+Installed Adafruit GFX Library@1.11.10
+Downloading Adafruit BusIO@1.16.1
+Adafruit BusIO@1.16.1
+Installing Adafruit BusIO@1.16.1
+Installed Adafruit BusIO@1.16.1
+
+
 ## About:
 
 

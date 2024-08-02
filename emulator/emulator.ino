@@ -3,22 +3,53 @@
 #include "chip8-keypad.h"
 #include "chip8-leds.h"
 #include "chip8-buzzer.h"
-#include "chip8-reader.h"
 #include "chip8.h"
 
-const uint8_t chip_select_reader_pin = 10;
-const uint8_t buzzer_pin = A0;
-const uint8_t power_led_pin = A1;
-const uint8_t signal_led_pin = A2;
-const uint8_t input_pins[] = {2, 3, 4, 5}; // Input pins (columns)
-const uint8_t output_pins[] = {6, 7, 8, 9}; // Output pins (rows)
+#include "RGBmatrixPanel.h"
+#include "bit_bmp.h"
+#include "fonts.h"
+
+#include <string.h>
+#include <stdlib.h>
+
+#include "Fonts/Picopixel.h"
+
+#define CLK 11 
+#define OE   9
+#define LAT 10
+#define A   A0
+#define B   A1
+#define C   A2
+#define D   A3
+
+RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
+
+//uint16_t high = matrix.ColorHSV(0,0,0,false);
+//uint16_t low = matrix.ColorHSV(1100,155,80,false);
+
+uint16_t high = matrix.ColorHSV(0,0,40,false);
+uint16_t low = matrix.ColorHSV(0,0,0,false);
+
+const uint8_t chip_select_reader_pin = 53;
+const uint8_t buzzer_pin = 32;
+const uint8_t power_led_pin = 34;
+const uint8_t signal_led_pin = 35;
+const uint8_t input_pins[] = {42, 43, 44, 45}; // Input pins (columns)
+const uint8_t output_pins[] = {48, 49, 46, 47}; // Output pins (rows)
 const uint8_t num_inputs = sizeof(input_pins) / sizeof(input_pins[0]); // Number of input pins (columns)
 const uint8_t num_outputs = sizeof(output_pins) / sizeof(output_pins[0]); // Number of output pins (rows)
 
-Chip8 chip8;
 
-size_t file_count = 0;
-char** file_list = nullptr;
+
+uint8_t file_count = 0;
+const int BUFFER_SIZE = 200; // Size of the buffer to store received data
+char received_data[BUFFER_SIZE]; // Buffer to store received data
+
+#define MAX_FILES 20   // Maximum number of files
+#define MAX_FILENAME_LENGTH 50  // Maximum length of each filename
+
+char file_array[MAX_FILES][MAX_FILENAME_LENGTH]; // Adjust the size of the array according to the expected number and size of files
+
 
 bool sd_plugged = false;
 bool file_selected = false;
@@ -26,10 +57,61 @@ bool game_finished = false;
 
 int current_file = 0;
 int files_in_panel = 4; // Number of filenames that fit into the screen
+int program_size;
 
-uint8_t program[PROGRAM_MEMORY_SIZE];
-size_t program_size;
 
+
+void screen_setup()
+{
+  matrix.begin();
+}
+
+
+void screen_clear()
+{
+  matrix.fillRect(0, 0, matrix.width(), matrix.height(), low);
+}
+
+
+void draw_title()
+{
+  screen_clear();
+  matrix.setFont(NULL);
+  screen_clear();
+  matrix.setTextSize(2);     
+  matrix.setTextWrap(false); 
+  matrix.setCursor(4, 10);   
+  matrix.setTextColor(high);
+  matrix.println("CHIP8");
+}
+
+void draw_pixel(uint8_t x, uint8_t y, uint8_t state)
+{
+  uint16_t color = (state == 1) ? high : low;
+	matrix.drawPixel(x, y, color);
+}
+
+void draw_text(String data, uint8_t x, uint8_t y, uint8_t size, const GFXfont *f)
+{
+    matrix.setFont(f);
+	  matrix.setTextSize(size);     
+  	matrix.setTextWrap(false); 
+  	matrix.setCursor(x, y);   
+  	matrix.setTextColor(high);
+  	matrix.println(data);
+}
+
+void draw_chip8_display(Chip8 *chip8)
+{
+  for (int y = 0; y < DISPLAY_HEIGHT; ++y) 
+  {
+        for (int x = 0; x < DISPLAY_WIDTH; ++x) 
+        {
+          uint8_t state = (chip8->display[y] >> (DISPLAY_WIDTH - 1 - x)) & 1;
+          draw_pixel(x,y,state);
+        }
+    }
+}
 
 int freeMemory() {
   extern int __heap_start, *__brkval;
@@ -37,23 +119,22 @@ int freeMemory() {
   return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
 }
 
-String get_selection(int current_file, int files_in_panel, size_t file_count, char** file_list) {
+void draw_selection() {
   Serial.println("#################################");
 
-  String data = "";
-  for (uint8_t i = 0; i < files_in_panel; i++) {
+  screen_clear();
+
+  for (uint8_t i = 0; i < files_in_panel; i++) 
+  {
+    String line = "";
     if (current_file + i < file_count) {
-      
-      data.concat((i == 0) ? ">" : " ");
-      data.concat(file_list[current_file + i]);
-      data.concat("\n");
-    } else {
-      data.concat("\n");
+      line += (i == 0) ? ">" : " ";
+      line += String(file_array[current_file + i]);
     }
+    Serial.println(line);
+    draw_text(line, 2, (i+1)*7,1, &Picopixel);
   }
-  Serial.print(data);
   Serial.println("#################################");
-  return data;
 }
 
 void print_file_list(char** file_list, size_t file_count) {
@@ -64,11 +145,11 @@ void print_file_list(char** file_list, size_t file_count) {
 }
 
 void setup() {
+  delay(1000);
+
   // Initialize serial communication for printing
   Serial.begin(9600);
-
-  // Initialize the SD card reader
-  chip8_reader_begin(chip_select_reader_pin);
+  Serial3.begin(9600);
 
   // Initialize the keypad
   keypad_init(input_pins, output_pins, num_inputs, num_outputs);
@@ -81,38 +162,218 @@ void setup() {
 
   // Turn on the Power LED
   led_control_power_led_on();
+  
+  screen_setup();
+  screen_clear();
+  draw_title();
 
   Serial.println("Initialization successful!");
 }
 
+
+void trim(char* str) {
+  char* end;
+
+  // Trim leading space
+  while (isspace((unsigned char)*str)) str++;
+
+  if (*str == 0) // All spaces?
+    return;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while (end > str && isspace((unsigned char)*end)) end--;
+
+  // Null terminate
+  *(end + 1) = '\0';
+}
+
+// Function to send the "status command" and wait until "plugged" response is received
+void handle_status_command() {
+  bool status_received = false;
+  
+  while (!status_received) {
+    // Send "status command" to Serial3
+    send_command("status");
+    
+    if (read_serial_response()) {
+      trim(received_data);
+      if (strcmp(received_data, "plugged") == 0) {
+        // Set LED to HIGH state and set status_received to true
+        digitalWrite(signal_led_pin, HIGH);
+        status_received = true;
+      } 
+      else if (strcmp(received_data, "unplugged") == 0) {
+        // Set LED to LOW state
+        digitalWrite(signal_led_pin, LOW);
+      }
+      Serial.println(received_data);
+    }
+
+    delay(1000);
+  }
+}
+
+// Function to send a command via Serial3
+void send_command(const char* command) {
+  Serial3.println(command);
+}
+
+// Function to read the response from Serial3
+bool read_serial_response() {
+  static char buffer[BUFFER_SIZE];
+  static int buffer_index = 0;
+  bool response_complete = false;
+
+  while (Serial3.available()) {
+    char incoming_byte = Serial3.read();
+
+    // Check for end of response (newline character)
+    if (incoming_byte == '\n') {
+      buffer[buffer_index] = '\0'; // Null-terminate the buffer
+      // Copy buffer to received_data if it's not empty
+      if (buffer_index > 0) {
+        strlcpy(received_data, buffer, BUFFER_SIZE);
+        buffer_index = 0; // Reset buffer index for next response
+        response_complete = true;
+      }
+      break;
+    }
+
+    // Accumulate data into buffer
+    if (buffer_index < BUFFER_SIZE - 1) {
+      buffer[buffer_index++] = incoming_byte;
+    } else {
+      // Buffer overflow protection
+      buffer_index = 0;
+    }
+  }
+
+  return response_complete;
+}
+
+// Function to handle the "list" command
+void handle_list_command() {
+
+  bool list_received = false;
+  memset(received_data, 0, BUFFER_SIZE);
+
+  send_command("list");
+  while (!list_received) {
+    
+    delay(10);
+    if (read_serial_response()) 
+    {
+      trim(received_data); // Clean up the received data
+
+      int found = 0;
+
+      for (int i = 0; i < BUFFER_SIZE; i++) {
+          if (received_data[i] == '!') {
+              found = 1;
+              break;
+          }
+          if (received_data[i] == '\0') {
+              break;
+          }
+      }
+
+      if(found)
+      {
+        Serial.println(received_data);
+        Serial.println("___________________________");
+        // Parse the file list
+        parse_file_list(received_data);
+      
+        // Print the file list to Serial Monitor for debugging
+        print_file_list();
+        return;
+      }
+
+      
+    
+    }
+    delay(10);
+  }
+}
+
+void parse_file_list(const char* list) {
+  int char_index = 0;
+
+  // Reset file array and file_count
+  for (int i = 0; i < MAX_FILES; i++) {
+    file_array[i][0] = '\0'; // Clear all file names
+  }
+  file_count = 0;
+
+  // Iterate through the list and split filenames based on delimiter '!'
+  for (int i = 0; list[i] != '\0'; i++) {
+    if (list[i] == '!') {
+      if (char_index > 0) {
+        file_array[file_count][char_index] = '\0'; // Null-terminate the current filename
+        file_count++;
+
+        // Ensure we do not exceed the maximum number of files
+        if (file_count >= MAX_FILES) {
+          break;
+        }
+
+        char_index = 0; // Reset index for the next filename
+      }
+    } else {
+      // Add character to the filename if there's space
+      if (char_index < MAX_FILENAME_LENGTH - 1) {
+        file_array[file_count][char_index++] = list[i];
+      } else {
+        // Handle potential filename overflow
+        file_array[file_count][MAX_FILENAME_LENGTH - 1] = '\0'; // Null-terminate
+        file_count++;
+
+        // Ensure we do not exceed the maximum number of files
+        if (file_count >= MAX_FILES) {
+          break;
+        }
+
+        char_index = 0; // Reset index for the next filename
+      }
+    }
+  }
+
+  // Handle the last filename
+  if (char_index > 0 && file_count < MAX_FILES) {
+    file_array[file_count][char_index] = '\0';
+    file_count++;
+  }
+}
+
+// Function to print the file list for debugging
+void print_file_list() {
+  int i = 0;
+  while (file_array[i][0] != '\0') {
+    Serial.println(file_array[i]);
+    i++;
+  }
+}
+
 void loop() {
+  Chip8 chip8;
+  chip8_init(&chip8);
   Serial.println("Waiting for SD card...");
 
   // phase 1: wait for sd card plug in 
-  while (!sd_plugged) {
-    if (chip8_reader_is_card_present()) {
-      Serial.println("SD card is present.");
-      led_control_signal_led_on();
-
-      file_list = chip8_reader_list_files(&file_count);
-      if (file_list) {
-        print_file_list(file_list, file_count);
-        sd_plugged = true;
-      } else {
-        Serial.println("Failed to list files or no files found.");
-      }
-    } else {
-      led_control_signal_led_off();
-    }
-  }
+  handle_status_command();
+  delay(1500);
+  handle_list_command();
   
+  Serial.println("Waiting for ROM selection...");
+
+  Serial.println(file_count);
   // phase 2: select file from menu
   while (!file_selected) {
-    String data = get_selection(current_file, files_in_panel, file_count, file_list);
-    //Serial.print(data);
-    // TODO display the slection menu
+    draw_selection();
 
     int key = wait_for_key();
+    Serial.println(key);
     wait_for_release();
     chip8_buzzer_on();
     delay(50);
@@ -133,20 +394,14 @@ void loop() {
     }
   }
 
-  Serial.println("Selected file: " + String(file_list[current_file]));
+  Serial.println("Selected file: " + String(file_array[current_file]));
 
   Serial.print("Free memory: ");
   Serial.print(freeMemory());
   Serial.println(" bytes");
 
   // phase 3: load program into chip8 memory
-  chip8_init(&chip8);
-  if (chip8_reader_read_file(file_list[current_file], program, PROGRAM_MEMORY_SIZE, &program_size)) {
-        chip8_load_ram(&chip8, program, program_size);
-        Serial.println("Program loaded into RAM successfully.");
-    } else {
-        Serial.println("Failed to load program.");
-    }
+  
   
 
   // phase 4: game loop
@@ -173,13 +428,5 @@ void loop() {
   }
   
   //phase 5: cleanup memeory and prepere fot the next loop
-  if (file_list) 
-  {
-      for (size_t i = 0; i < file_count; i++) 
-      {
-        free(file_list[i]);
-      }
-      free(file_list);
-  }
 
 }
