@@ -1,6 +1,8 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
+#include <Arduino.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -10,7 +12,7 @@ extern "C"{
 #include <string.h>  // For memset and memcpy
 
 // Define constants for CHIP-8 emulator
-#define RAM_SIZE 2048// change later to 4096
+#define RAM_SIZE 1548// change later to 4096
 #define REGISTERS_SIZE 16
 #define STACK_SIZE 16
 #define MEMORY_READ_START 512 // change later to 512
@@ -19,7 +21,7 @@ extern "C"{
 #define FONT_SET_SIZE 80 // 16 characters * 5 bytes each
 #define KEYBOARD_SIZE 16
 #define DISPLAY_WIDTH 64
-#define DISPLAY_HEIGHT 1 // hange later to 32
+#define DISPLAY_HEIGHT 32 // hange later to 32
 #define OPCODE_AMOUNT 34
 #define CPU_FREQUENCY 500  // 500 Hz for the main loop
 #define TIMER_FREQUENCY 60  // 60 Hz for timer updates

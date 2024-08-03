@@ -59,7 +59,7 @@ int current_file = 0;
 int files_in_panel = 4; // Number of filenames that fit into the screen
 int program_size;
 
-
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 void screen_setup()
 {
@@ -108,8 +108,10 @@ void draw_chip8_display(Chip8 *chip8)
         for (int x = 0; x < DISPLAY_WIDTH; ++x) 
         {
           uint8_t state = (chip8->display[y] >> (DISPLAY_WIDTH - 1 - x)) & 1;
+          //Serial.print(state);
           draw_pixel(x,y,state);
         }
+        //Serial.println("");
     }
 }
 
@@ -355,6 +357,59 @@ void print_file_list() {
   }
 }
 
+int get_file_length(const char* filename) {
+  char command[20];
+  snprintf(command, sizeof(command), "len!%s", filename);
+
+  send_command(command);
+  Serial.print("Requesting length of: ");
+  Serial.println(filename);
+
+  // Wait and read the response
+  while (!read_serial_response()) {
+    delay(100); // Wait until we get the response
+  }
+
+  trim(received_data); // Clean up the received data
+  int file_length = atoi(received_data); // Convert to integer
+
+  Serial.print("Length of ");
+  Serial.print(filename);
+  Serial.print(": ");
+  Serial.println(file_length);
+
+  return file_length;
+}
+
+void fetch_file_into_chip8_ram(const char* filename, Chip8 *chip8) {
+  int file_length = get_file_length(filename);
+  
+  for (int byte_no = 0; byte_no < file_length; byte_no++) {
+    char command[30];
+    snprintf(command, sizeof(command), "fetch!%s!%d", filename, byte_no);
+
+    send_command(command);
+    Serial.print("Fetching byte ");
+    Serial.print(byte_no);
+    Serial.println("...");
+
+    // Wait and read the response
+    while (!read_serial_response()) {
+      delay(100); // Wait until we get the response
+    }
+
+    trim(received_data); // Clean up the received data
+    int number = strtol(received_data, NULL, 16);
+    chip8->ram[MEMORY_READ_START + byte_no] = number; // Store byte in CHIP-8 RAM
+    
+    Serial.print("Fetched byte: ");
+    Serial.println(received_data); // Print for debugging
+    Serial.println("chip8: " + String(MEMORY_READ_START + byte_no) + " " + chip8->ram[MEMORY_READ_START + byte_no]);
+  }
+
+  Serial.println("File loaded into CHIP-8 RAM.");
+}
+
 void loop() {
   Chip8 chip8;
   chip8_init(&chip8);
@@ -394,17 +449,21 @@ void loop() {
     }
   }
 
-  Serial.println("Selected file: " + String(file_array[current_file]));
+  
 
-  Serial.print("Free memory: ");
-  Serial.print(freeMemory());
-  Serial.println(" bytes");
+  String selected_file = String(file_array[current_file]);
+  Serial.println("Selected file: " + selected_file);
+
+  screen_clear();
+  draw_text("LOADING...", 2, 12, 1, NULL);
 
   // phase 3: load program into chip8 memory
   
-  
+  fetch_file_into_chip8_ram(selected_file.c_str(), &chip8);
 
   // phase 4: game loop
+  Serial.println("launching game!");
+  chip8.display_changed = 1;
   while(!game_finished)
   {
     if(chip8.sound_timer > 0)
@@ -416,9 +475,20 @@ void loop() {
       chip8_buzzer_off();
     }
 
-    // TODO implement display
+    if(chip8.display_changed)
+    {
+      //Serial.println("drawing display...");
+      draw_chip8_display(&chip8);
+      chip8.display_changed = 0;
+    }
+    
 
     Opcode opcode = chip8_fetch_opcode(&chip8);
+    uint16_t number = opcode.instruction;
+    //Serial.println("0x" + String((number >> 12) & 0xF, HEX) + String((number >> 8) & 0xF, HEX) + String((number >> 4) & 0xF, HEX) + String(number & 0xF, HEX));
+
+
+
     int result = chip8_execute_opcode(&chip8, &opcode);
     if(result)
     {
@@ -426,7 +496,8 @@ void loop() {
       break;
     }
   }
-  
+  Serial.println("game end!");
+  delay(1000);
   //phase 5: cleanup memeory and prepere fot the next loop
-
+  resetFunc(); 
 }

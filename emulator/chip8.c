@@ -211,7 +211,7 @@ Opcode chip8_fetch_opcode(Chip8 *chip8) {
  */
 int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode) {
     chip8_wait_for_next_tick();
-    chip8_handle_timer_updates(chip8);
+   chip8_handle_timer_updates(chip8);
 
     int handled = 1;
     for (int i = 0; i < OPCODE_AMOUNT; ++i) {
@@ -228,5 +228,5 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode) {
  * Wait to maintain a constant CPU frequency.
  */
 void chip8_wait_for_next_tick() {
-    delay(TIME_PER_TICK_MS);
+    //delay(TIME_PER_TICK_MS);
 }
