@@ -15,13 +15,13 @@ extern "C"{
 #define RAM_SIZE 1548// change later to 4096
 #define REGISTERS_SIZE 16
 #define STACK_SIZE 16
-#define MEMORY_READ_START 512 // change later to 512
+#define MEMORY_READ_START 512 
 #define PROGRAM_MEMORY_SIZE (RAM_SIZE - MEMORY_READ_START)
 #define FONT_SET_START 0
 #define FONT_SET_SIZE 80 // 16 characters * 5 bytes each
 #define KEYBOARD_SIZE 16
 #define DISPLAY_WIDTH 64
-#define DISPLAY_HEIGHT 32 // hange later to 32
+#define DISPLAY_HEIGHT 32 
 #define OPCODE_AMOUNT 34
 #define CPU_FREQUENCY 500  // 500 Hz for the main loop
 #define TIMER_FREQUENCY 60  // 60 Hz for timer updates

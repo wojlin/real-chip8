@@ -3,9 +3,7 @@
 
 #include "chip8.h"
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+
 
 
 /**
@@ -280,8 +278,6 @@ void chip8_execute_opcode_load_registers(Chip8 *chip8, Opcode *opcode);
  */
 void chip8_execute_opcode_load_memory(Chip8 *chip8, Opcode *opcode);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+
 
 #endif /* CHIP8_OPCODES_H */

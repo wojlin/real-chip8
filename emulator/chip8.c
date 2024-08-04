@@ -96,7 +96,7 @@ uint8_t chip8_should_buzz(Chip8 *chip8) {
  * @param chip8 Pointer to the Chip8 structure.
  */
 void chip8_handle_timer_updates(Chip8 *chip8) {
-    chip8->timer += 1;
+    chip8->timer += 5;
     if (chip8->timer > TIME_PER_TIMER_TICK_MS) {
         chip8_decrement_timers(chip8);
         chip8->timer = 0;
@@ -210,7 +210,7 @@ Opcode chip8_fetch_opcode(Chip8 *chip8) {
  * @return 0 if the opcode was handled, 1 otherwise.
  */
 int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode) {
-    chip8_wait_for_next_tick();
+    //chip8_wait_for_next_tick();
    chip8_handle_timer_updates(chip8);
 
     int handled = 1;
@@ -228,5 +228,5 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode) {
  * Wait to maintain a constant CPU frequency.
  */
 void chip8_wait_for_next_tick() {
-    //delay(TIME_PER_TICK_MS);
+    delay(TIME_PER_TICK_MS);
 }

@@ -6,6 +6,7 @@
 #include "chip8.h"
 
 #include "RGBmatrixPanel.h"
+#include "Adafruit_GFX.h"
 #include "bit_bmp.h"
 #include "fonts.h"
 
@@ -23,6 +24,7 @@
 #define D   A3
 
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
+GFXcanvas1 canvas(64, 32);
 
 //uint16_t high = matrix.ColorHSV(0,0,0,false);
 //uint16_t low = matrix.ColorHSV(1100,155,80,false);
@@ -109,10 +111,13 @@ void draw_chip8_display(Chip8 *chip8)
         {
           uint8_t state = (chip8->display[y] >> (DISPLAY_WIDTH - 1 - x)) & 1;
           //Serial.print(state);
-          draw_pixel(x,y,state);
+          canvas.drawPixel(x,y,state);
         }
         //Serial.println("");
     }
+
+  matrix.drawBitmap(0, 0, canvas.getBuffer(),
+  canvas.width(), canvas.height(), 0xFFFF, 0x0000);
 }
 
 int freeMemory() {

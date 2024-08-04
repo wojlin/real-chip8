@@ -204,7 +204,7 @@ void chip8_execute_opcode_jump(Chip8 *chip8, Opcode *opcode)
 /* Set Vx = random byte AND kk. */
 void chip8_execute_opcode_random(Chip8 *chip8, Opcode *opcode)
 {   
-    srandom(1);
+   srand(analogRead(A0));
     uint8_t random_value = random() % (255 + 1);
     chip8->v[opcode->x] = random_value & opcode->kk;
     chip8->program_counter = (chip8->program_counter + 2) & 0x0FFF;
