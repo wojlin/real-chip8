@@ -1,16 +1,7 @@
 # CHIP8 Machine
 
-Downloading Adafruit GFX Library@1.11.10
-Adafruit GFX Library@1.11.10
-Installing Adafruit GFX Library@1.11.10
-Installed Adafruit GFX Library@1.11.10
-Downloading Adafruit BusIO@1.16.1
-Adafruit BusIO@1.16.1
-Installing Adafruit BusIO@1.16.1
-Installed Adafruit BusIO@1.16.1
 
-
-## About:
+# About:
 
 
 <img src="3D/perspective.png" width="30%">
@@ -19,7 +10,7 @@ Installed Adafruit BusIO@1.16.1
 <img src="3D/right.png" width="30%">
 <img src="3D/top.png" width="30%">
 
-## Documentation:
+# Documentation:
 
 
 ## How To Build:
@@ -29,11 +20,14 @@ Installed Adafruit BusIO@1.16.1
     |                 Part                   | Amount | Link |
     |----------------------------------------|--------|--------|
     | 5V 4A power supply                     | 1x     | [link](https://botland.store/socket-power-supply/8850-power-supply-5v-4a-dc-55-25-plug-5903351242530.html) |
-    | tact switch with cap                   | 12x    | [link](https://botland.store/tact-switch/11138-tact-switch-12x12mm-cap-black-5-pieces-5904422307530.html)
-    | otg cable                              | 1x     | [link](https://botland.store/usb-20-cables/3998-cable-goobay-otg-host-micro-usb-02m-4040849951947.html)
+    | tact switch with cap                   | 16x    | [link](https://botland.store/tact-switch/11138-tact-switch-12x12mm-cap-black-5-pieces-5904422307530.html)
+    | micro sd card reader                              | 1x     | [link](https://botland.store/memory-cards-accessories/8230-micro-sd-card-reader-module-5904422311278.html)
     | yellow 3mm led                         | 1x     | [link](https://botland.store/leds/19988-led-3mm-yellow-10pcs-justpi-5904422328764.html)
     | red 3mm led                            | 1x     | [link](https://botland.store/leds/19989-led-3mm-red-10pcs-justpi-5904422328771.html)
     | 64x32px 2.5mm waveshare matrix display | 1x     | [link](https://www.waveshare.com/rgb-matrix-p2.5-64x32.htm)
+    | arduino mega                           | 1x     | [link](https://botland.store/arduino-compatible-boards-dfrobot/2685-dfrobot-mega-2560-v32-compatible-with-arduino-6959420922345.html)
+    | arduino uno                            | 1x     | [link](https://botland.store/arduino-basic-boards/1060-arduino-uno-rev3-module-a000066-7630049200050.html)
+    | 5mm power switch                       | 1x     |     |
 
     you will also need some wires, soldering tools, polishing papers, clips, screwdriver to asseble this machine
 
@@ -50,6 +44,7 @@ Installed Adafruit BusIO@1.16.1
         | screw_4x.stl       | gray  | 4x     |
         | display_mount.stl  | white | 1x     |
         | keyboard_mount.stl | white | 1x     |
+        | keyboard_holder.stl| white | 1x     |
         | bottom.stl         | white | 1x     |
         | bottom_right.stl   | white | 1x     |
         | joiner_3mm_2x.stl  | white | 2x     |
@@ -84,40 +79,19 @@ Installed Adafruit BusIO@1.16.1
 
 2. Wiring
 
-    - insert raspberry pi zero into "bottom.stl" part
-    - insert 5v 4A power supply trough hole in "bottom.stl" part
-    - connect tact switches to rpi using diagram below:
-    - connect leds to rpi using diagram below
-    - connect display to rpi using diagram below
+    - insert arduino mega and arduino uno zero into "bottom.stl" part
+    - insert 5v 4A power supply trough first hole in "bottom.stl" part
+    - insertpower switch trough second hole in "bottom.stl" part
+    - connect tact switches to arduino mega using diagram below:
+    - connect leds to arduino mega using diagram below
+    - connect display to arduino mega using diagram below
+    - connect buzzer to arduino mega using diagram below
+    - connect sd card reader to arduino uno using diagram below
 
-    ```
-    - d means display
-    - g means green led
-    - y means yellow led
-    ```
 
-    |   Connection   | Pin | Pin | Connection  |
-    | -------------- | --- | --- | ----------- |
-    | -              | 1   | 2   | POWER +     |
-    | y +            | 3   | 4   | -           |
-    | g +            | 5   | 6   | d GND       |
-    | d LAT/STB      | 7   | 8   | -           |
-    | g,y GND        | 9   | 10  | d E         |
-    | d CLK          | 11  | 12  | d OE-       |
-    | d G1           | 13  | 14  | -           |
-    | d A            | 15  | 16  | d B         |
-    | -              | 17  | 18  | d C         |
-    | d B2           | 19  | 20  | -           |
-    | d G2           | 21  | 22  | d D         |
-    | d R1           | 23  | 24  | d R2        |
-    | -              | 25  | 26  | d B1        |
-    | -              | 27  | 28  | -           |
-    | - +            | 29  | 30  | -           |
-    | - +            | 31  | 32  | -           |
-    | - +            | 33  | 34  | -           |
-    | - +            | 35  | 36  | - +         |
-    | - +            | 37  | 38  | - +         |
-    | -              | 39  | 40  | - +         |
+    | pin | place | |
+    |-|-|-|
+    |52 | | |
 
 3. Installing software
 
@@ -127,100 +101,34 @@ Installed Adafruit BusIO@1.16.1
 
     - make sure that only ch8 files are in the drive (remove the trash diretory volumine info etc)
 
-    - install raspian on your rpi
-
-    - enable ssh or any method of communication with your rpi cause from now on all of the commends are need to be typed on your rpi
-
     - clone this repo:
 
         ```bash
         git clone git@github.com:wojlin/real-chip8.git
         ```
 
-    - move to repo directory:
+    - download arduino IDE:
 
         ```bash
-        cd real-chip8
+        https://www.arduino.cc/en/software
         ```
 
-    - update submodules
+    - plug machine into 5V 4A socket (!important, do not connect usb cable if power supply is turned off)
 
-        ```bash
-        git submodule add -f git@github.com:hzeller/rpi-rgb
-        git submodule init
-        git submodule update
-        ```
+    - open sd/sd.ino in arduino IDE
 
-    - move to submodule python bindings
+    - upload sd.ino to arduino uno
 
-        ```bash
-        cd rpi-rgb-led-matrix/bindings/python
-        ```
+    - open emulator/emulator.ino in arduino IDE
 
-    - install dependencies
+    - upload emulator/emulator.ino to arduino mega
 
-        ```bash
-        sudo apt-get update && sudo apt-get install python3-dev cython3 -y
-        ```
+    - unplug usb cable and mount bottom part of machine with top and secure with screws
 
-    - install rgb matrix lib for python
-
-        ```bash
-        make build-python 
-        sudo make install-python 
-        ```
-
-    - move to runtime directory:
-
-        ```bash
-        cd runtime
-        ```
-
-    - install all python dependencies:
-
-        ```bash
-        sudo pip install -r requirements. txt
-        pip install -r requirements. txt
-        ```
-
-    - execute the setup.sh script using sudo priviliages: 
-    (this will add the python script to autostart so on evry turn on the computer will wait for an chip8 rom to be isntrted and start the emulator)
     
-        ```bash
-        sudo setup.sh
-        ```
-
-    - go back to repo directory:
-
-        ```bash
-        cd ../
-        ```
-
-    - go to emulator directory:
-
-        ```bash
-        cd emulator
-        ```
-
-    - build emulator using cmake:
-
-        ```bash
-        mkdir build
-        cd build
-        cmake ..
-        cmake --build .
-        ```
-
-    - now reboot your rpi
-
-    - after rpi reboot if you place your cartidge into cartidge hole the chip8 emulator shuld run automaticly and display your chip8 rom
 
 ## Troubleshooting:
 
 1. check if cartidge drive is formated to FAT
 2. check if cartridge name is "chip8"
-3. check logs in the runtime/runtime.log
-    - if autostart is setup correctly each time you plug the rpi to power, the runtime.py shuld be runned at autostart and it will procuce log "runtime started". if you dont see this message in logs that means that your runtime.py is not added correctly to rpi autostart service
-    - if autostart works and you placed cartidge but notthing happends look for "detected desired drive" in logs. that means that runtime detected the valid drive
-    - after that a log with filenames should appear. if no that means that probably your files are corrupted or have bad extension. chip8 rom shuld have ".ch8" extension
-4. send the logs to me at wojciech.linowski.2137@gmail.com and i will try to help
+3. check if files are in DOS 8.3 format

@@ -117,7 +117,7 @@ void draw_chip8_display(Chip8 *chip8)
     }
 
   matrix.drawBitmap(0, 0, canvas.getBuffer(),
-  canvas.width(), canvas.height(), 0xFFFF, 0x0000);
+  canvas.width(), canvas.height(), 0x6b4d, 0x0000);
 }
 
 int freeMemory() {
@@ -469,8 +469,13 @@ void loop() {
   // phase 4: game loop
   Serial.println("launching game!");
   chip8.display_changed = 1;
+
+
+  int count = 0;
   while(!game_finished)
   {
+    long int t1 = millis();
+
     if(chip8.sound_timer > 0)
     {
       chip8_buzzer_on();
@@ -480,10 +485,15 @@ void loop() {
       chip8_buzzer_off();
     }
 
+
     if(chip8.display_changed)
     {
-      //Serial.println("drawing display...");
-      draw_chip8_display(&chip8);
+      count++;
+      if(count > 2)
+      {
+        draw_chip8_display(&chip8);
+        count = 0;
+      }
       chip8.display_changed = 0;
     }
     
@@ -500,6 +510,9 @@ void loop() {
       game_finished = true;
       break;
     }
+
+    long int t2 = millis();
+Serial.print("Time taken by the task: "); Serial.print(t2-t1); Serial.println(" milliseconds");
   }
   Serial.println("game end!");
   delay(1000);

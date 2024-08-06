@@ -96,7 +96,7 @@ uint8_t chip8_should_buzz(Chip8 *chip8) {
  * @param chip8 Pointer to the Chip8 structure.
  */
 void chip8_handle_timer_updates(Chip8 *chip8) {
-    chip8->timer += 5;
+    chip8->timer += 15;
     if (chip8->timer > TIME_PER_TIMER_TICK_MS) {
         chip8_decrement_timers(chip8);
         chip8->timer = 0;
