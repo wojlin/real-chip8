@@ -105,20 +105,28 @@ void draw_text(String data, uint8_t x, uint8_t y, uint8_t size, const GFXfont *f
 
 void draw_chip8_display(Chip8 *chip8)
 {
-  for (int y = 0; y < DISPLAY_HEIGHT; ++y) 
-  {
-        for (int x = 0; x < DISPLAY_WIDTH; ++x) 
+    for (int y = 0; y < DISPLAY_HEIGHT; ++y) 
+    {   
+        uint64_t diff = chip8->display[y] ^ chip8->old_display[y];  // XOR to find differing bits
+        if (diff)
         {
-          uint8_t state = (chip8->display[y] >> (DISPLAY_WIDTH - 1 - x)) & 1;
-          //Serial.print(state);
-          canvas.drawPixel(x,y,state);
-        }
-        //Serial.println("");
-    }
+            for (int x = 0; x < DISPLAY_WIDTH; ++x) 
+            {          
+                int bit_position = DISPLAY_WIDTH - 1 - x;
 
-  matrix.drawBitmap(0, 0, canvas.getBuffer(),
-  canvas.width(), canvas.height(), 0x6b4d, 0x0000);
+                if (diff & ((uint64_t)1 << bit_position)) 
+                {
+                    // Determine the pixel state in the current display
+                    uint8_t state = (chip8->display[y] >> bit_position) & 1;
+
+                    // Draw the pixel with the determined state
+                    draw_pixel(x, y, state);
+                }
+            }
+        }
+    }
 }
+
 
 int freeMemory() {
   extern int __heap_start, *__brkval;
@@ -400,16 +408,16 @@ void fetch_file_into_chip8_ram(const char* filename, Chip8 *chip8) {
 
     // Wait and read the response
     while (!read_serial_response()) {
-      delay(100); // Wait until we get the response
+      delay(1); // Wait until we get the response
     }
 
     trim(received_data); // Clean up the received data
     int number = strtol(received_data, NULL, 16);
     chip8->ram[MEMORY_READ_START + byte_no] = number; // Store byte in CHIP-8 RAM
     
-    Serial.print("Fetched byte: ");
-    Serial.println(received_data); // Print for debugging
-    Serial.println("chip8: " + String(MEMORY_READ_START + byte_no) + " " + chip8->ram[MEMORY_READ_START + byte_no]);
+    //Serial.print("Fetched byte: ");
+    //Serial.println(received_data); // Print for debugging
+    //Serial.println("chip8: " + String(MEMORY_READ_START + byte_no) + " " + chip8->ram[MEMORY_READ_START + byte_no]);
   }
 
   Serial.println("File loaded into CHIP-8 RAM.");
@@ -470,7 +478,7 @@ void loop() {
   Serial.println("launching game!");
   chip8.display_changed = 1;
 
-
+  screen_clear();
   int count = 0;
   while(!game_finished)
   {
@@ -488,12 +496,9 @@ void loop() {
 
     if(chip8.display_changed)
     {
-      count++;
-      if(count > 2)
-      {
+    
         draw_chip8_display(&chip8);
-        count = 0;
-      }
+
       chip8.display_changed = 0;
     }
     
@@ -512,7 +517,7 @@ void loop() {
     }
 
     long int t2 = millis();
-Serial.print("Time taken by the task: "); Serial.print(t2-t1); Serial.println(" milliseconds");
+//Serial.print("Time taken by the task: "); Serial.print(t2-t1); Serial.println(" milliseconds");
   }
   Serial.println("game end!");
   delay(1000);

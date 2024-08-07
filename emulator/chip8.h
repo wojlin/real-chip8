@@ -12,7 +12,7 @@ extern "C"{
 #include <string.h>  // For memset and memcpy
 
 // Define constants for CHIP-8 emulator
-#define RAM_SIZE 1548// change later to 4096
+#define RAM_SIZE 1248// change later to 4096
 #define REGISTERS_SIZE 16
 #define STACK_SIZE 16
 #define MEMORY_READ_START 512 
@@ -42,6 +42,7 @@ typedef struct {
     uint16_t stack[STACK_SIZE];         // Stack
     uint16_t keys;                      // Keyboard state (bitfield)
     uint64_t display[DISPLAY_HEIGHT];   // Display
+    uint64_t old_display[DISPLAY_HEIGHT];   // Display
     unsigned long timer;                      // Timer
     uint8_t display_changed;            // Flag for redrawing display only if needed
 } Chip8;

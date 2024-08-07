@@ -217,6 +217,8 @@ void chip8_execute_opcode_draw(Chip8 *chip8, Opcode *opcode)
     uint8_t pos_y = chip8->v[opcode->y];
     uint8_t amount = opcode->n;
 
+    memcpy(chip8->old_display, chip8->display, sizeof(chip8->display));
+
     chip8->display_changed = 1;
 
     uint8_t collision = 0;
